@@ -19,6 +19,8 @@ const User = mongoose.model('User', userSchema);
 
 app.get("/data", async (req, res) => {
     try {
+        res.set('Access-Control-Allow-Origin', '*');
+
         const users = await User.find(); // Fetch all users
         if (users.length === 0) {
             return res.status(404).json({ message: "No users found" });
