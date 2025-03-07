@@ -41,6 +41,14 @@ app.get("/data", async (req, res) => {
 //#endregion
 
 //#region login
+
+app.use(
+    cors({
+        origin: "http://localhost:3000", // Change to frontend URL
+        credentials: true, // Allow cookies & session sharing
+    })
+);
+
 app.use(
     session({
         secret: "your_secret_key",
@@ -49,13 +57,6 @@ app.use(
         cookie: {
             secure: false
         }
-    })
-);
-
-app.use(
-    cors({
-        origin: "http://localhost:3000", // Change to frontend URL
-        credentials: true, // Allow cookies & session sharing
     })
 );
 
@@ -86,17 +87,10 @@ app.get("/login", async (req, res) => {
                 email: foundUser.email,
                 name: foundUser.name,
             };
-            req.session.isAuth = true;
-            req.session.save(err => {
-                if (err) console.log("Session save error:", err);
-            });
 
-            // Store user data in cookies (e.g., email and name)
-            res.cookie("email", foundUser.email, { maxAge: 2000 * 60 * 60 });
-            res.cookie("name", foundUser.name, { maxAge: 2000 * 60 * 60 });
-
-            console.log(req.session);
-            console.log(req.cookies);
+            res.cookie("email", foundUser.email);
+            res.cookie("name", foundUser.name);
+            res.cookie("id", foundUser._id);
         }
 
         res.json(resultStatus);
@@ -108,13 +102,23 @@ app.get("/login", async (req, res) => {
 //#endregion
 
 //#region Check Session Route
-app.get("/check-session", (req, res) => {
-    res.json(req.session);
-    console.log(req.session);
-    if (req.session.isAuth) {
-        console.log("redirected");
-    } else {
-    }
+app.get("/get-credentials", (req, res) => {
+    res.json(req.cookies);
+});
+
+app.get("/clean-credentials", (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send('Could not log out');
+        }
+
+        // Clear cookies
+        res.clearCookie('connect.sid'); // Clear session cookie (adjust if you have other cookies)
+        res.clearCookie('email'); // Clear other cookies as necessary
+        res.clearCookie('name');
+        res.clearCookie('id');
+        res.send('Logged out successfully');
+    });
 });
 //#endregion
 
